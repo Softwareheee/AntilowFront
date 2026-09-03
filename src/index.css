@@ -1,1 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
+
+:root {
+	font-family: 'DM Sans', sans-serif;
+	color: #f8fafc;
+	background: #080b12;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+}
+
+body { margin: 0; min-width: 320px; }
+button { font-family: inherit; }
+
+.dashboard-shell {
+	background: radial-gradient(circle at 75% 0%, rgba(220, 38, 38, 0.12), transparent 30%), #080b12;
+}
+
+.auth-shell { background: radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.16), transparent 38%), #080b12; }
+.auth-card { animation: rise-in .45s ease-out both; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+.dashboard-content { background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 42px 42px; }
+.metric-card { position: relative; overflow: hidden; border-radius: 1rem; border-width: 1px; padding: 1.25rem; }
+.metric-card p { margin: 0; color: #94a3b8; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; }
+.metric-card strong { display: block; margin: .75rem 0 .5rem; color: white; font-family: 'Space Grotesk', sans-serif; font-size: 2rem; letter-spacing: -.04em; }
+.metric-card span { font-size: .75rem; }
+.metric-line { position: absolute; bottom: 0; left: 0; height: 3px; width: 42%; opacity: .8; }
