@@ -1,5 +1,9 @@
-function Dashboard({ authenticated = false, onLogin, onRegister, onLogout }) {
-    const sections = ['Resumen', 'Soporte técnico', 'Inventario', 'Reportes']
+import { useState } from 'react'
+import Navegacion from './Navegacion.jsx'
+import AdministracionPanel from './AdministracionPanel.jsx'
+
+function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdmin = false }) {
+    const [activeSection, setActiveSection] = useState('home')
 
     return (
         <section className="dashboard-shell min-h-screen text-slate-100">
@@ -27,25 +31,19 @@ function Dashboard({ authenticated = false, onLogin, onRegister, onLogout }) {
             </header>
 
             <div className="mx-auto flex max-w-7xl flex-col lg:flex-row">
-                <aside className="border-b border-white/10 px-5 py-5 lg:w-64 lg:border-b-0 lg:border-r lg:px-6 lg:py-8">
-                    <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">Workspace</p>
-                    <nav className="grid grid-cols-2 gap-2 lg:grid-cols-1">
-                        {sections.map((section, index) => (
-                            <button className={`flex items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${index === 0 ? 'bg-red-500/15 font-bold text-red-300 ring-1 ring-red-400/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`} key={section} type="button">
-                                <span className="text-xs font-black text-slate-500">0{index + 1}</span>{section}
-                            </button>
-                        ))}
-                    </nav>
-                    <div className="mt-8 hidden rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-4 lg:block">
-                        <p className="text-xs font-bold text-cyan-300">Centro de ayuda</p>
-                        <p className="mt-2 text-xs leading-5 text-slate-400">Gestiona incidencias y mantén tus equipos en marcha.</p>
-                    </div>
-                </aside>
+                <Navegacion activeSection={activeSection} onSectionChange={setActiveSection} isAdmin={isAdmin} />
 
                 <main className="dashboard-content flex-1 px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
+                    {isAdmin && (activeSection === 'home' || activeSection === 'users') ? <AdministracionPanel /> : <>
+                    {activeSection !== 'home' && (
+                        <div className="mb-8 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 px-5 py-4 text-sm text-cyan-100" role="status">
+                            <span className="font-bold">Vista seleccionada:</span> {activeSection === 'support' ? 'Soporte técnico' : activeSection === 'inventory' ? 'Inventario' : 'Reportes'}.
+                            <span className="ml-2 text-cyan-300/70">Módulo preparado para tus operaciones.</span>
+                        </div>
+                    )}
                     <div className="mb-10 max-w-3xl">
-                        <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-red-400">Panel de control / 01</p>
-                        <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Todo tu soporte,<br /><span className="text-red-400">en un solo lugar.</span></h1>
+                        <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-red-400">{activeSection === 'home' ? 'Panel de control / 01' : 'Módulo operativo'}</p>
+                        <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">{activeSection === 'home' ? <>Todo tu soporte,<br /><span className="text-red-400">en un solo lugar.</span></> : activeSection === 'support' ? <>Resuelve cada<br /><span className="text-red-400">incidencia a tiempo.</span></> : activeSection === 'inventory' ? <>Equipos bajo<br /><span className="text-cyan-400">control total.</span></> : <>Decisiones con<br /><span className="text-amber-400">datos claros.</span></>}</h1>
                         <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400">Supervisa tickets, clientes y el rendimiento de tu inventario tecnológico desde una vista diseñada para actuar rápido.</p>
                     </div>
 
@@ -64,6 +62,7 @@ function Dashboard({ authenticated = false, onLogin, onRegister, onLogout }) {
                         </article>
                         <article className="rounded-2xl border border-white/10 bg-slate-900/70 p-6"><p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Estado del servicio</p><div className="mt-6 flex items-center justify-center"><div className="grid h-32 w-32 place-items-center rounded-full border-[10px] border-emerald-400/20 border-t-emerald-400"><div className="text-center"><strong className="block text-3xl text-white">98%</strong><span className="text-[10px] uppercase tracking-widest text-slate-500">Uptime</span></div></div></div><p className="mt-5 text-center text-xs text-slate-400">Todos los sistemas funcionan con normalidad.</p></article>
                     </div>
+                    </>}
                 </main>
             </div>
         </section>
