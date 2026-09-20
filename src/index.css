@@ -26,3 +26,6 @@ button { font-family: inherit; }
 .metric-card strong { display: block; margin: .75rem 0 .5rem; color: white; font-family: 'Space Grotesk', sans-serif; font-size: 2rem; letter-spacing: -.04em; }
 .metric-card span { font-size: .75rem; }
 .metric-line { position: absolute; bottom: 0; left: 0; height: 3px; width: 42%; opacity: .8; }
+.catalog-input { width: 100%; border-radius: .5rem; border: 1px solid rgba(255,255,255,.1); background: rgba(2,6,23,.8); padding: .625rem .75rem; font-size: .875rem; color: white; outline: none; }
+.catalog-input::placeholder { color: #475569; }
+.catalog-input:focus { border-color: #22d3ee; box-shadow: 0 0 0 2px rgba(34,211,238,.15); }

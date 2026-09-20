@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Navegacion from './Navegacion.jsx'
 import AdministracionPanel from './AdministracionPanel.jsx'
+import Inventario from './Inventario.jsx'
 
 function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdmin = false }) {
     const [activeSection, setActiveSection] = useState('home')
@@ -34,7 +35,7 @@ function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdm
                 <Navegacion activeSection={activeSection} onSectionChange={setActiveSection} isAdmin={isAdmin} />
 
                 <main className="dashboard-content flex-1 px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
-                    {isAdmin && (activeSection === 'home' || activeSection === 'users') ? <AdministracionPanel /> : <>
+                    {activeSection === 'inventory' ? <Inventario isAdmin={isAdmin} /> : isAdmin && (activeSection === 'home' || activeSection === 'users') ? <AdministracionPanel /> : <>
                     {activeSection !== 'home' && (
                         <div className="mb-8 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 px-5 py-4 text-sm text-cyan-100" role="status">
                             <span className="font-bold">Vista seleccionada:</span> {activeSection === 'support' ? 'Soporte técnico' : activeSection === 'inventory' ? 'Inventario' : 'Reportes'}.

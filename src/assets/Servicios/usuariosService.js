@@ -46,3 +46,33 @@ export async function editarSolicitudAdmin(id, solicitud) {
 export async function eliminarSolicitudAdmin(id) {
     await api.delete(`/solicitudes-servicio/${id}`)
 }
+
+export async function listarProductos() {
+    const { data } = await api.get('/productos')
+    return data
+}
+
+export async function crearProducto(producto) {
+    const { data } = await api.post('/productos', producto)
+    return data
+}
+
+export async function editarProducto(id, producto) {
+    const { data } = await api.put(`/productos/${id}`, producto)
+    return data
+}
+
+export async function eliminarProducto(id) {
+    await api.delete(`/productos/${id}`)
+}
+
+export async function solicitarCompra(product_id, producto) {
+    const { data } = await api.post('/solicitudes-servicio', {
+        product_id,
+        tipo: 'compra',
+        asunto: `Solicitud de compra: ${producto.nombre}`,
+        descripcion: `El cliente solicita información y disponibilidad de ${producto.nombre}.`,
+        prioridad: 'normal',
+    })
+    return data
+}
