@@ -53,12 +53,16 @@ export async function listarProductos() {
 }
 
 export async function crearProducto(producto) {
-    const { data } = await api.post('/productos', producto)
+    const { data } = await api.post('/productos', producto, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return data
 }
 
 export async function editarProducto(id, producto) {
-    const { data } = await api.put(`/productos/${id}`, producto)
+    const { data } = await api.post(`/productos/${id}?_method=PUT`, producto, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    })
     return data
 }
 
