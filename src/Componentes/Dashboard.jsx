@@ -4,6 +4,7 @@ import AdministracionPanel from './AdministracionPanel.jsx'
 import Inventario from './Inventario.jsx'
 import Soportetecnico from './Soportetecnico.jsx'
 import Reportes from './Reportes.jsx'
+import BrandLogo from './BrandLogo.jsx'
 
 function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdmin = false }) {
     const [activeSection, setActiveSection] = useState('home')
@@ -13,7 +14,7 @@ function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdm
             <header className="border-b border-white/10 bg-slate-950/80 px-5 py-4 backdrop-blur-xl sm:px-8">
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-red-500 font-black text-white shadow-lg shadow-red-500/20">A</div>
+                        <BrandLogo className="h-12 w-12 shrink-0 drop-shadow-[0_0_12px_rgba(239,68,68,0.2)]" />
                         <div>
                             <p className="text-sm font-black uppercase tracking-[0.25em] text-white">Antilow</p>
                             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Soporte & equipos</p>

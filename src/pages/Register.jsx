@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { registrarse } from '../assets/Servicios/authService.js'
+import BrandLogo from '../Componentes/BrandLogo.jsx'
 
 function Register({ onRegister, onLogin, onBack }) {
 	const [form, setForm] = useState({ name: '', email: '', password: '', password_confirmation: '' })
@@ -44,7 +45,7 @@ function Register({ onRegister, onLogin, onBack }) {
 			<section className="auth-card w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/90 p-8 shadow-2xl shadow-black/40">
 				<div className="mb-8">
 					<button className="mb-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 transition hover:text-white" type="button" onClick={onBack}>← Volver al dashboard</button>
-					<p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-red-400">Antilow</p>
+					<div className="mb-5 flex items-center gap-3"><BrandLogo className="h-12 w-12" /><p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-400">Antilow</p></div>
 					<h1 className="text-3xl font-bold text-white">Crear cuenta</h1>
 					<p className="mt-2 text-sm text-slate-400">Únete al centro de soporte y gestiona tus equipos.</p>
 				</div>
