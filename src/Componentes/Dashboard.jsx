@@ -38,7 +38,7 @@ function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdm
 
                 <main className="dashboard-content flex-1 px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
                     {activeSection === 'inventory' ? (
-                        <Inventario isAdmin={isAdmin} />
+                        <Inventario isAdmin={isAdmin} authenticated={authenticated} onLogin={onLogin} onRegister={onRegister} />
                     ) : activeSection === 'support' ? (
                         <Soportetecnico />
                     ) : activeSection === 'reports' ? (
