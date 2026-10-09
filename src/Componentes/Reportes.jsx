@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import api from '../api/api.js'
 
-const API_URL = 'http://localhost:8000/api'
-
+/** Valores iniciales para registrar el diagnóstico, trabajo e importes del caso. */
 const initialReportForm = {
     solicitud_servicio_id: '',
     diagnostico: '',
@@ -12,6 +11,22 @@ const initialReportForm = {
     costo_repuestos: 0,
 }
 
+/** Obtiene reportes y solicitudes juntas para alimentar ambas listas del módulo. */
+async function loadReportData() {
+    const [reportsResponse, requestsResponse] = await Promise.all([
+        api.get('/reportes'),
+        api.get('/solicitudes-servicio'),
+    ])
+
+    return {
+        reports: Array.isArray(reportsResponse.data) ? reportsResponse.data : [],
+        pendingRequests: Array.isArray(requestsResponse.data)
+            ? requestsResponse.data.filter((request) => !['resuelto', 'resuelta', 'completado'].includes(request.estado))
+            : [],
+    }
+}
+
+/** Consola administrativa para cerrar solicitudes, registrar informes y descargar facturas. */
 export function Reportes() {
     const [reportes, setReportes] = useState([])
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([])
@@ -23,47 +38,54 @@ export function Reportes() {
     const [form, setForm] = useState(initialReportForm)
     const [feedback, setFeedback] = useState({ type: '', message: '' })
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-        return {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/json',
-            }
-        }
-    }
-
+    /** Refresca informes y solicitudes y presenta errores del backend. */
     const fetchData = async () => {
         setLoading(true)
         setFeedback({ type: '', message: '' })
         try {
-            const headers = getAuthHeaders()
-
-            const [resReportes, resSolicitudes] = await Promise.all([
-                axios.get(`${API_URL}/reportes`, headers).catch(() => ({ data: [] })),
-                axios.get(`${API_URL}/solicitudes-servicio`, headers).catch(() => ({ data: [] }))
-            ])
-
-            setReportes(Array.isArray(resReportes.data) ? resReportes.data : [])
-
-            const pendientes = Array.isArray(resSolicitudes.data)
-                ? resSolicitudes.data.filter(sol => sol.estado !== 'resuelto' && sol.estado !== 'completado')
-                : []
-            setSolicitudesPendientes(pendientes)
-        } catch (error) {
+            const data = await loadReportData()
+            setReportes(data.reports)
+            setSolicitudesPendientes(data.pendingRequests)
+        } catch (requestError) {
             setFeedback({
                 type: 'error',
-                message: error.response?.data?.message || 'Error al conectar con el servidor.'
+                message: requestError.response?.data?.message || 'Error al conectar con el servidor.'
             })
         } finally {
             setLoading(false)
         }
     }
 
+    // Carga inicial cancelable para no escribir estado después de salir del módulo.
     useEffect(() => {
-        fetchData()
+        let cancelled = false
+
+        const loadInitialData = async () => {
+            try {
+                const data = await loadReportData()
+                if (cancelled) return
+                setReportes(data.reports)
+                setSolicitudesPendientes(data.pendingRequests)
+            } catch (requestError) {
+                if (!cancelled) {
+                    setFeedback({
+                        type: 'error',
+                        message: requestError.response?.data?.message || 'Error al conectar con el servidor.'
+                    })
+                }
+            } finally {
+                if (!cancelled) setLoading(false)
+            }
+        }
+
+        loadInitialData()
+
+        return () => {
+            cancelled = true
+        }
     }, [])
 
+    /** Inicializa el informe con la solicitud que el administrador eligió atender. */
     const handleOpenModal = (solicitud) => {
         setSelectedSolicitud(solicitud)
         setForm({
@@ -73,19 +95,21 @@ export function Reportes() {
         setModalOpen(true)
     }
 
+    /** Cierra el editor y restablece sus valores para el siguiente caso. */
     const handleCloseModal = () => {
         setModalOpen(false)
         setSelectedSolicitud(null)
         setForm(initialReportForm)
     }
 
+    /** Registra el informe; el backend actualiza el caso y genera la factura. */
     const handleSubmitReport = async (e) => {
         e.preventDefault()
         setSaving(true)
         setFeedback({ type: '', message: '' })
 
         try {
-            await axios.post(`${API_URL}/reportes`, form, getAuthHeaders())
+            await api.post('/reportes', form)
             setFeedback({
                 type: 'success',
                 message: `Reporte técnico guardado con éxito para el requerimiento #${form.solicitud_servicio_id}.`
@@ -104,12 +128,11 @@ export function Reportes() {
         }
     }
 
+    /** Descarga la factura como blob y crea un enlace temporal para el navegador. */
     const descargarPDF = async (reporteId, solicitudId) => {
         setDownloadingId(reporteId)
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-            const response = await axios.get(`${API_URL}/reportes/${reporteId}/factura/descargar`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/reportes/${reporteId}/factura/descargar`, {
                 responseType: 'blob',
             })
 
@@ -121,10 +144,19 @@ export function Reportes() {
             link.click()
             link.remove()
             window.URL.revokeObjectURL(url)
-        } catch (error) {
+        } catch (requestError) {
+            let serverMessage = requestError.response?.data?.message
+            if (requestError.response?.data instanceof Blob) {
+                try {
+                    const errorBody = JSON.parse(await requestError.response.data.text())
+                    serverMessage = errorBody.message
+                } catch {
+                    serverMessage = ''
+                }
+            }
             setFeedback({
                 type: 'error',
-                message: 'No se pudo descargar la factura en PDF. Intenta de nuevo.'
+                message: serverMessage || 'No se pudo descargar la factura en PDF. Intenta de nuevo.'
             })
         } finally {
             setDownloadingId(null)

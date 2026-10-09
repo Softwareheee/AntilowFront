@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { crearProducto, editarProducto, eliminarProducto, listarProductos, solicitarCompra } from '../assets/Servicios/usuariosService.js'
 
+/** Catálogo público y herramientas administrativas de stock y productos. */
 const emptyProduct = { nombre: '', categoria: 'periferico', descripcion: '', precio: '', stock: '', imagen_url: '', imagen: null, caracteristicas: '' }
 
 function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegister }) {
@@ -13,6 +14,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 	const [message, setMessage] = useState('')
 	const [error, setError] = useState('')
 
+	/** Actualiza el catálogo desde la API y refleja errores de conectividad. */
 	const loadProducts = async () => {
 		try {
 			setError('')
@@ -25,6 +27,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 		}
 	}
 
+	// Carga el catálogo al entrar y descarta respuestas tardías al desmontar la vista.
 	useEffect(() => {
 		let cancelled = false
 		const loadInitialProducts = async () => {
@@ -42,9 +45,11 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 	}, [])
 
 	const changeForm = ({ target }) => setForm((current) => ({ ...current, [target.name]: target.value }))
+	/** Conserva el archivo seleccionado para enviarlo luego como multipart. */
 	const changeImage = ({ target }) => setForm((current) => ({ ...current, imagen: target.files?.[0] || null }))
 	const resetForm = () => { setForm(emptyProduct); setEditingId(null) }
 
+	/** Envía campos e imagen como multipart para crear o actualizar un producto. */
 	const submitProduct = async (event) => {
 		event.preventDefault()
 		setSaving(true)
@@ -72,6 +77,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 		}
 	}
 
+	/** Carga los datos existentes en el formulario de edición del administrador. */
 	const startEdit = (product) => {
 		setEditingId(product.id)
 		setForm({ ...product, imagen: null, caracteristicas: (product.caracteristicas || []).join(', ') })
@@ -79,6 +85,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 		setError('')
 	}
 
+	/** Elimina un producto después de confirmación y refresca el catálogo. */
 	const deleteProduct = async (product) => {
 		if (!window.confirm(`¿Eliminar ${product.nombre} del inventario?`)) return
 		setDeletingId(product.id)
@@ -96,6 +103,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 		}
 	}
 
+	/** Crea una solicitud de compra; visitantes pasan primero al login. */
 	const buyProduct = async (product) => {
 		if (!authenticated) {
 			onLogin?.()

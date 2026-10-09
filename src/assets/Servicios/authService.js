@@ -1,5 +1,6 @@
 import api from '../../api/api.js'
 
+/** Envía credenciales y conserva el token/perfil devueltos por Laravel. */
 export async function iniciarSesion(credentials) {
   const { data } = await api.post('/login', credentials)
   guardarSesion(data)
@@ -7,6 +8,7 @@ export async function iniciarSesion(credentials) {
   return data
 }
 
+/** Registra una cuenta de cliente y abre su sesión inicial. */
 export async function registrarse(userData) {
   const { data } = await api.post('/register', userData)
   guardarSesion(data)
@@ -14,6 +16,7 @@ export async function registrarse(userData) {
   return data
 }
 
+/** Persiste de forma local el token Sanctum y el perfil mínimo de sesión. */
 function guardarSesion(data) {
   const token = data.token || data.access_token
 
@@ -25,14 +28,15 @@ function guardarSesion(data) {
   localStorage.setItem('user', JSON.stringify(data.user || data.usuario || {}))
 }
 
+/** Elimina los datos locales de autenticación al cerrar sesión. */
 export function cerrarSesion() {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
 }
-// src/services/authService.js
+// Compatibilidad con consumidores antiguos; el flujo actual usa Axios más arriba.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/api";
 
-//Login
+/** Inicia sesión usando fetch y guarda el token en localStorage. */
 export async function login(email, password) {
   const response = await fetch(`${API_URL}/login`, {
     method: "POST",
@@ -46,13 +50,13 @@ export async function login(email, password) {
   const token = data.token || data.access_token;
   if (!token) throw new Error("Token de autenticación no recibido.");
 
-  // Guardar token en localStorage y notificar a la app
+  // Notifica a consumidores antiguos que observan el evento personalizado.
   localStorage.setItem("token", token);
   window.dispatchEvent(new Event('authChanged'));
   return data;
 }
 
-//Registro
+/** Registra una cuenta con el endpoint público de Laravel. */
 export async function register(name, email, password) {
   const response = await fetch(`${API_URL}/register`, {
     method: "POST",
@@ -64,7 +68,7 @@ export async function register(name, email, password) {
   return response.json();
 }
 
-// Obtener usuario autenticado
+/** Consulta el perfil actual enviando explícitamente el token almacenado. */
 export async function getUser() {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No hay token guardado");
@@ -73,7 +77,7 @@ export async function getUser() {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`, //Aquí se envía el token
+      Authorization: `Bearer ${token}`,
     },
   });
 

@@ -1,3 +1,4 @@
+/** Menú principal; muestra la sección activa y agrega opciones según el rol. */
 const navigationItems = [
 	{ id: 'home', label: 'Página principal', mark: '01' },
 	{ id: 'support', label: 'Soporte técnico', mark: '02' },
@@ -5,6 +6,7 @@ const navigationItems = [
 	{ id: 'reports', label: 'Reportes', mark: '04' },
 ]
 
+/** Notifica al Dashboard qué vista debe renderizarse. */
 function Navegacion({ activeSection, onSectionChange, isAdmin = false }) {
 	const items = isAdmin ? [...navigationItems, { id: 'users', label: 'Usuarios', mark: '05' }] : navigationItems
 	return (

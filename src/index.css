@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Paleta y tipografía base de la plataforma. */
 :root {
 	font-family: 'DM Sans', sans-serif;
 	color: #f8fafc;
@@ -12,20 +13,48 @@
 body { margin: 0; min-width: 320px; }
 button { font-family: inherit; }
 
+/* Fondos y superficies compartidas por dashboard y autenticación. */
 .dashboard-shell {
 	background: radial-gradient(circle at 75% 0%, rgba(220, 38, 38, 0.12), transparent 30%), #080b12;
 }
 
+/* Transiciones y superficie compartida por Login y Registro. */
 .auth-shell { background: radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.16), transparent 38%), #080b12; }
 .auth-card { animation: rise-in .45s ease-out both; }
 @keyframes rise-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Retícula del área de contenido y tarjetas de métricas del Dashboard. */
 .dashboard-content { background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 42px 42px; }
 .metric-card { position: relative; overflow: hidden; border-radius: 1rem; border-width: 1px; padding: 1.25rem; }
 .metric-card p { margin: 0; color: #94a3b8; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; }
 .metric-card strong { display: block; margin: .75rem 0 .5rem; color: white; font-family: 'Space Grotesk', sans-serif; font-size: 2rem; letter-spacing: -.04em; }
 .metric-card span { font-size: .75rem; }
 .metric-line { position: absolute; bottom: 0; left: 0; height: 3px; width: 42%; opacity: .8; }
+
+/* Campos del formulario administrativo de inventario. */
 .catalog-input { width: 100%; border-radius: .5rem; border: 1px solid rgba(255,255,255,.1); background: rgba(2,6,23,.8); padding: .625rem .75rem; font-size: .875rem; color: white; outline: none; }
 .catalog-input::placeholder { color: #475569; }
 .catalog-input:focus { border-color: #22d3ee; box-shadow: 0 0 0 2px rgba(34,211,238,.15); }
+
+/* Tema de Swagger UI integrado dentro de la SPA. */
+.api-docs-shell { min-height: 100vh; background: radial-gradient(circle at 85% 0%, rgba(220, 38, 38, .1), transparent 25%), #080b12; }
+.swagger-ui-host .swagger-ui { color: #dbe3ee; }
+.swagger-ui-host .swagger-ui .scheme-container,
+.swagger-ui-host .swagger-ui .opblock,
+.swagger-ui-host .swagger-ui .info .description,
+.swagger-ui-host .swagger-ui section.models { background: #111925; border-color: #293548; box-shadow: none; }
+.swagger-ui-host .swagger-ui .opblock .opblock-section-header { background: #172130; }
+.swagger-ui-host .swagger-ui .info .title,
+.swagger-ui-host .swagger-ui .opblock-tag,
+.swagger-ui-host .swagger-ui .opblock .opblock-summary-description,
+.swagger-ui-host .swagger-ui label,
+.swagger-ui-host .swagger-ui .parameter__name,
+.swagger-ui-host .swagger-ui .response-col_status { color: #e2e8f0; }
+.swagger-ui-host .swagger-ui .model-box,
+.swagger-ui-host .swagger-ui .model { background: #111925; color: #dbe3ee; }
+.swagger-ui-host .swagger-ui input,
+.swagger-ui-host .swagger-ui textarea,
+.swagger-ui-host .swagger-ui select { background: #0b1018; color: #e2e8f0; border-color: #334155; }
+.swagger-ui-host .swagger-ui .btn.authorize { color: #16a6a1; border-color: #16a6a1; }
+.swagger-ui-host .swagger-ui .btn.execute { background: #d74343; border-color: #d74343; }
+.swagger-ui-host .swagger-ui a { color: #67d4ce; }

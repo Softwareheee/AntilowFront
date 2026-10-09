@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { registrarse } from '../assets/Servicios/authService.js'
 import BrandLogo from '../Componentes/BrandLogo.jsx'
 
+/** Registro de clientes con confirmación local de contraseña antes del envío. */
 function Register({ onRegister, onLogin, onBack }) {
 	const [form, setForm] = useState({ name: '', email: '', password: '', password_confirmation: '' })
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 
+	/** Actualiza el campo editado y limpia el error anterior. */
 	const handleChange = ({ target }) => {
 		setForm((current) => ({ ...current, [target.name]: target.value }))
 		setError('')
 	}
 
+	/** Valida la confirmación y envía al backend solo los datos de registro. */
 	const handleSubmit = async (event) => {
 		event.preventDefault()
 		if (form.password !== form.password_confirmation) {

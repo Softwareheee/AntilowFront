@@ -15,6 +15,7 @@ import {
 const emptyUser = { name: '', email: '', password: '', role: 'client' }
 const emptyClient = { nombre: '', apellido: '', email: '', telefono: '', direccion: '' }
 
+/** Consolida la administración de cuentas, clientes y solicitudes de servicio. */
 function AdministracionPanel() {
     const [users, setUsers] = useState([])
     const [clients, setClients] = useState([])
@@ -29,6 +30,7 @@ function AdministracionPanel() {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
 
+    /** Recarga en paralelo todos los conjuntos usados por los indicadores y tablas. */
     const loadAll = async () => {
         try {
             setError('')
@@ -44,6 +46,7 @@ function AdministracionPanel() {
         }
     }
 
+    // Evita actualizar estado si el administrador abandona el panel durante la consulta.
     useEffect(() => {
         let cancelled = false
         const loadInitialData = async () => {
@@ -64,6 +67,7 @@ function AdministracionPanel() {
         return () => { cancelled = true }
     }, [])
 
+    /** Ejecuta altas/ediciones compartiendo feedback, bloqueo y recarga posterior. */
     const save = async (event, action, reset) => {
         event.preventDefault()
         setSaving(true)
@@ -81,6 +85,7 @@ function AdministracionPanel() {
         }
     }
 
+    /** Confirma una eliminación y refresca las tablas si la API la acepta. */
     const remove = async (message, action) => {
         if (!window.confirm(message)) return
         try { await action(); await loadAll() } catch (requestError) { setError(requestError.response?.data?.message || 'No se pudo eliminar el registro.') }
@@ -113,20 +118,24 @@ function AdministracionPanel() {
     )
 }
 
+/** Presenta estados de carga/vacío con estructura de tabla reutilizable. */
 function AdminTable({ title, eyebrow, headers, children, loading, empty }) {
     const tableContent = Array.isArray(children) && children.length === 0 ? <tr><td className="px-5 py-8 text-center text-slate-500" colSpan={headers.length}>{empty}</td></tr> : children
 
     return <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/75 shadow-2xl shadow-black/20"><div className="border-b border-white/10 px-5 py-4"><p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">{eyebrow}</p><h2 className="mt-1 text-xl font-bold text-white">{title}</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-white/[.03] text-xs uppercase tracking-wider text-slate-500"><tr>{headers.map((header) => <th className="px-5 py-3" key={header}>{header}</th>)}</tr></thead><tbody className="divide-y divide-white/5">{loading ? <tr><td className="px-5 py-8 text-center text-slate-500" colSpan={headers.length}>Cargando...</td></tr> : tableContent}</tbody></table></div></div>
 }
 
+/** Agrupa los campos de edición con acciones uniformes para los tres recursos. */
 function EditorForm({ title, children, onSubmit, onCancel, saving }) {
     return <form className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-5" onSubmit={onSubmit}><div className="mb-4 flex items-center justify-between"><h2 className="font-bold text-white">{title}</h2><button className="text-xs text-slate-400 hover:text-white" type="button" onClick={onCancel}>Cancelar</button></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{children}</div><button className="mt-4 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300" type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button></form>
 }
 
+/** Campo controlado reutilizable para formularios administrativos. */
 function EditorInput({ name, label, type = 'text', value, onChange, required = false }) {
     return <label className="block"><span className="mb-1 block text-xs font-semibold capitalize text-slate-400">{label}</span><input className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400" name={name} type={type} value={value} onChange={onChange} required={required} minLength={type === 'password' && value ? 8 : undefined} /></label>
 }
 
+/** Selector controlado para estados, prioridades y roles permitidos. */
 function EditorSelect({ name, label, value, onChange, options }) {
     return <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-400">{label}</span><select className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white" name={name} value={value} onChange={onChange}>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { crearSolicitud, listarMisSolicitudes } from '../assets/Servicios/solicitudesService.js'
 
+/** Valores iniciales del formulario de tickets del cliente. */
 const initialForm = {
 	tipo: '',
 	asunto: '',
@@ -8,6 +9,7 @@ const initialForm = {
 	prioridad: 'normal',
 }
 
+/** Catálogo de servicios y recursos visuales seleccionables en soporte. */
 const supportServices = [
 	{ value: 'soporte remoto', label: 'Soporte remoto', description: 'Ayuda para resolver incidencias sin desplazamiento.', image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=700&q=80' },
 	{ value: 'diagnóstico de equipo', label: 'Diagnóstico de equipo', description: 'Revisión de fallas de hardware, software o rendimiento.', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=700&q=80' },
@@ -24,6 +26,7 @@ const statusLabels = {
 	cancelada: 'Cancelada',
 }
 
+/** Módulo de creación y seguimiento de solicitudes del cliente autenticado. */
 function Soportetecnico() {
 	const [form, setForm] = useState(initialForm)
 	const [requests, setRequests] = useState([])
@@ -31,6 +34,7 @@ function Soportetecnico() {
 	const [saving, setSaving] = useState(false)
 	const [feedback, setFeedback] = useState({ type: '', message: '' })
 
+	/** Recarga la lista personal luego de crear una solicitud. */
 	const loadRequests = async () => {
 		try {
 			const loadedRequests = await listarMisSolicitudes()
@@ -42,6 +46,7 @@ function Soportetecnico() {
 		}
 	}
 
+	// Recupera el historial del cliente al entrar y evita actualizaciones tras desmontar.
 	useEffect(() => {
 		let cancelled = false
 
@@ -59,6 +64,7 @@ function Soportetecnico() {
 		return () => { cancelled = true }
 	}, [])
 
+	/** Valida y envía el requerimiento elegido a la mesa de soporte. */
 	const handleSubmit = async (event) => {
 		event.preventDefault()
 		setSaving(true)

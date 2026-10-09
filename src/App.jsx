@@ -5,14 +5,17 @@ import Register from './pages/Register.jsx'
 import Dashboard from './Componentes/Dashboard.jsx'
 import { cerrarSesion } from './assets/Servicios/authService.js'
 
+/** Resuelve navegación pública, sesión actual y permisos del usuario. */
 function App() {
   const [authenticated, setAuthenticated] = useState(Boolean(localStorage.getItem('token')))
   const [authView, setAuthView] = useState('dashboard')
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'))
 
+  // Revalida la sesión persistida al montar o cambiar el estado autenticado.
   useEffect(() => {
     if (!authenticated) return
 
+    // Confirma el token con Laravel y actualiza el rol antes de renderizar áreas privadas.
     const loadCurrentUser = async () => {
       try {
         const { data } = await api.get('/user')
@@ -28,6 +31,7 @@ function App() {
     loadCurrentUser()
   }, [authenticated])
 
+  /** Limpia la sesión local y vuelve a la vista pública inicial. */
   const handleLogout = () => {
     cerrarSesion()
     setAuthenticated(false)

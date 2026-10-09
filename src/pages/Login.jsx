@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { iniciarSesion } from '../assets/Servicios/authService.js'
 import BrandLogo from '../Componentes/BrandLogo.jsx'
 
+/** Formulario de acceso que delega la autenticación en authService. */
 function Login({ onLogin, onRegister, onBack }) {
 	const [credentials, setCredentials] = useState({ email: '', password: '' })
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 
+	/** Mantiene cada campo del formulario sincronizado con su input. */
 	const handleChange = ({ target }) => {
 		setCredentials((current) => ({ ...current, [target.name]: target.value }))
 		setError('')
 	}
 
+	/** Envía credenciales y propaga la sesión al componente de aplicación. */
 	const handleSubmit = async (event) => {
 		event.preventDefault()
 		setLoading(true)
