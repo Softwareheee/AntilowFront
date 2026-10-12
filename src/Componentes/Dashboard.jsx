@@ -5,6 +5,7 @@ import Inventario from './Inventario.jsx'
 import Soportetecnico from './Soportetecnico.jsx'
 import Reportes from './Reportes.jsx'
 import BrandLogo from './BrandLogo.jsx'
+import Inicio from './Inicio.jsx'
 
 /** Distribuye las vistas de la plataforma y adapta controles al rol y la sesión. */
 function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdmin = false }) {
@@ -40,13 +41,15 @@ function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdm
 
                 <main className="dashboard-content flex-1 px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
                     {/* Cada sección monta su módulo dentro del mismo Dashboard. */}
-                    {activeSection === 'inventory' ? (
+                    {activeSection === 'home' ? (
+                        <Inicio onNavigate={setActiveSection} onLogin={onLogin} onRegister={onRegister} />
+                    ) : activeSection === 'inventory' ? (
                         <Inventario isAdmin={isAdmin} authenticated={authenticated} onLogin={onLogin} onRegister={onRegister} />
                     ) : activeSection === 'support' ? (
                         <Soportetecnico />
                     ) : activeSection === 'reports' ? (
                         <Reportes />
-                    ) : isAdmin && (activeSection === 'home' || activeSection === 'users') ? (
+                    ) : isAdmin && activeSection === 'users' ? (
                         <AdministracionPanel />
                     ) : (
                         <>

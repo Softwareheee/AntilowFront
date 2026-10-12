@@ -23,23 +23,6 @@ export async function eliminarUsuario(id) {
     await api.delete(`/usuarios/${id}`)
 }
 
-/** Devuelve el directorio de clientes para el administrador. */
-export async function listarClientesAdmin() {
-    const { data } = await api.get('/clientes')
-    return data
-}
-
-/** Actualiza la información de contacto de un cliente. */
-export async function editarClienteAdmin(id, cliente) {
-    const { data } = await api.put(`/clientes/${id}`, cliente)
-    return data
-}
-
-/** Elimina un registro del directorio de clientes. */
-export async function eliminarClienteAdmin(id) {
-    await api.delete(`/clientes/${id}`)
-}
-
 /** Recupera solicitudes propias para clientes o todas para administradores. */
 export async function listarSolicitudesAdmin() {
     const { data } = await api.get('/solicitudes-servicio')

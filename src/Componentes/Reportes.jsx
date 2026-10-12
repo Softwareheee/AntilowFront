@@ -79,7 +79,6 @@ export function Reportes() {
         }
 
         loadInitialData()
-
         return () => {
             cancelled = true
         }
@@ -90,7 +89,7 @@ export function Reportes() {
         setSelectedSolicitud(solicitud)
         setForm({
             ...initialReportForm,
-            solicitud_servicio_id: solicitud.id
+            solicitud_servicio_id: solicitud.id,
         })
         setModalOpen(true)
     }
@@ -205,7 +204,7 @@ export function Reportes() {
                     ) : (
                         <div className="space-y-4">
                             {reportes.map((reporte) => (
-                                <article key={reporte.id} className="rounded-xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-white/20">
+                                <article id={`service-report-${reporte.id}`} key={reporte.id} className="rounded-xl border border-white/10 bg-slate-950/60 p-4 transition hover:border-white/20">
                                     <div className="flex items-start justify-between gap-3 border-b border-white/5 pb-3">
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -213,8 +212,9 @@ export function Reportes() {
                                                 <h3 className="text-sm font-bold text-white">{reporte.solicitudservicio?.asunto || 'Sin Asunto'}</h3>
                                             </div>
                                             <p className="mt-0.5 text-xs text-slate-400">
-                                                Cliente: <strong className="text-slate-200">{reporte.solicitudservicio?.user?.name || 'Cliente'}</strong>
+                                                Cliente: <strong className="text-slate-200">{reporte.nombre_cliente || reporte.solicitudservicio?.user?.name || 'Cliente'}</strong>
                                             </p>
+                                            {reporte.telefono_cliente && <p className="mt-1 text-xs text-slate-400">Teléfono: <a className="text-cyan-300 hover:text-cyan-200" href={`tel:${reporte.telefono_cliente}`}>{reporte.telefono_cliente}</a></p>}
                                         </div>
                                         <div className="text-right">
                                             <span className="text-sm font-extrabold text-emerald-400">
