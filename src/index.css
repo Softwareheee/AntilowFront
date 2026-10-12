@@ -30,15 +30,26 @@ button { font-family: inherit; }
 .support-request-details-grid.is-open { grid-template-rows: 1fr; opacity: 1; }
 .support-empty-state { animation: support-empty-enter .55s cubic-bezier(.2,.8,.2,1) both; }
 .support-completed-banner { animation: support-completed-enter .45s ease-out both; }
+.support-notice-backdrop { animation: support-notice-fade-in .2s ease-out both; }
+.support-success-notice { animation: support-notice-pop-in .45s cubic-bezier(.18,.89,.32,1.28) both; }
+.support-notice-glow { animation: support-notice-glow 3s ease-in-out infinite alternate; }
+.support-success-check { stroke-dasharray: 24; stroke-dashoffset: 24; animation: support-check-draw .5s .18s ease-out forwards; }
+.support-notice-progress { animation: support-notice-countdown 8s linear both; }
 @keyframes support-card-enter { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes support-empty-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes support-completed-enter { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes support-notice-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes support-notice-pop-in { from { opacity: 0; transform: translateY(18px) scale(.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes support-notice-glow { from { opacity: .45; transform: translateX(-50%) scale(.9); } to { opacity: 1; transform: translateX(-50%) scale(1.12); } }
+@keyframes support-check-draw { to { stroke-dashoffset: 0; } }
+@keyframes support-notice-countdown { from { width: 100%; } to { width: 0; } }
 @media (prefers-reduced-motion: reduce) {
 	.support-summary-card, .support-request-card { animation: none; transition: none; }
 	.support-summary-card:hover { transform: none; }
 	.support-request-card:hover { transform: none; }
 	.support-request-details-grid { transition: none; }
 	.support-empty-state, .support-completed-banner { animation: none; }
+	.support-notice-backdrop, .support-success-notice, .support-notice-glow, .support-success-check, .support-notice-progress { animation: none; }
 	.support-empty-state a { transition: none; }
 	.support-empty-state a:hover { transform: none; }
 }

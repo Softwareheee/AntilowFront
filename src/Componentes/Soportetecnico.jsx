@@ -67,8 +67,16 @@ function Soportetecnico() {
 	const [loading, setLoading] = useState(true)
 	const [saving, setSaving] = useState(false)
 	const [feedback, setFeedback] = useState({ type: '', message: '' })
+	const [showSuccessNotice, setShowSuccessNotice] = useState(false)
 	const [expandedRequestId, setExpandedRequestId] = useState(null)
 	const [requestFilter, setRequestFilter] = useState('todos')
+
+	useEffect(() => {
+		if (!showSuccessNotice) return undefined
+
+		const timeoutId = window.setTimeout(() => setShowSuccessNotice(false), 8000)
+		return () => window.clearTimeout(timeoutId)
+	}, [showSuccessNotice])
 
 	const requestSummary = [
 		{ label: 'Pendientes', status: 'pendiente', icon: '◷', color: 'border-amber-300/20 bg-amber-300/[.06] text-amber-200', glow: 'bg-amber-300/10' },
@@ -132,7 +140,8 @@ function Soportetecnico() {
 		try {
 			await crearSolicitud(form)
 			setForm(initialForm)
-			setFeedback({ type: 'success', message: 'Requerimiento enviado. La mesa de soporte ya puede atenderlo.' })
+			setFeedback({ type: '', message: '' })
+			setShowSuccessNotice(true)
 			await loadRequests()
 		} catch (error) {
 			const validationErrors = error.response?.data?.errors
@@ -145,6 +154,31 @@ function Soportetecnico() {
 
 	return (
 		<section className="space-y-6" aria-labelledby="support-title">
+			{showSuccessNotice && (
+				<div className="support-notice-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm">
+					<div className="support-success-notice relative w-full max-w-md overflow-hidden rounded-3xl border border-emerald-300/20 bg-[#0d151b] p-7 text-center shadow-[0_24px_100px_rgba(0,0,0,.65)] sm:p-9" role="status" aria-live="polite" aria-atomic="true">
+						<div className="support-notice-glow pointer-events-none absolute -top-24 left-1/2 h-48 w-64 -translate-x-1/2 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden="true" />
+						<div className="relative mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-300/25 bg-emerald-300/10 text-emerald-300 shadow-[0_0_35px_rgba(52,211,153,.15)]">
+							<svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path className="support-success-check" d="m6 12.5 4 4L18.5 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+							</svg>
+						</div>
+						<p className="relative mt-5 text-[11px] font-bold uppercase tracking-[.22em] text-emerald-300">Solicitud recibida</p>
+						<h2 className="relative mt-2 font-['Space_Grotesk'] text-2xl font-bold text-white sm:text-3xl">¡Ya está hecho!</h2>
+						<p className="relative mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-300">
+							Tu reporte quedó registrado y nuestros técnicos se encargarán de revisarlo. Ya puedes estar tranquilo; te mantendremos al tanto de cada avance.
+						</p>
+						<button
+							className="relative mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d151b]"
+							type="button"
+							onClick={() => setShowSuccessNotice(false)}
+						>
+							Entendido
+						</button>
+						<div className="support-notice-progress absolute bottom-0 left-0 h-1 bg-gradient-to-r from-emerald-400 to-cyan-300" aria-hidden="true" />
+					</div>
+				</div>
+			)}
 			<div className="max-w-3xl">
 				<p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-red-400">Mesa de ayuda / 02</p>
 				<h1 id="support-title" className="text-4xl font-black tracking-tight text-white sm:text-5xl">Soporte técnico <span className="text-red-400">sin vueltas.</span></h1>
