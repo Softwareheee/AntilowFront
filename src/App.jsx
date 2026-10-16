@@ -39,6 +39,14 @@ function App() {
     setAuthView('dashboard')
   }
 
+  /** Cierra una sesión expirada y abre directamente el formulario de acceso. */
+  const handleReauthenticate = () => {
+    cerrarSesion()
+    setAuthenticated(false)
+    setCurrentUser({})
+    setAuthView('login')
+  }
+
   if (!authenticated) {
     if (authView === 'dashboard') {
       return <Dashboard onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />
@@ -51,7 +59,7 @@ function App() {
     )
   }
 
-  return <Dashboard authenticated isAdmin={currentUser.role === 'admin'} onLogout={handleLogout} />
+  return <Dashboard authenticated isAdmin={currentUser.role === 'admin'} onLogout={handleLogout} onLogin={handleReauthenticate} />
 }
 
 export default App

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { iniciarSesion } from '../assets/Servicios/authService.js'
+import { getApiErrorMessage } from '../api/api.js'
 import BrandLogo from '../Componentes/BrandLogo.jsx'
 
 /** Formulario de acceso que delega la autenticación en authService. */
@@ -25,9 +26,7 @@ function Login({ onLogin, onRegister, onBack }) {
 			onLogin(session)
 		} catch (requestError) {
 			setError(
-				requestError.response?.data?.message ||
-					requestError.message ||
-					'No se pudo iniciar sesion',
+				getApiErrorMessage(requestError, 'No se pudo iniciar sesión. Revisa tus datos e inténtalo de nuevo.'),
 			)
 		} finally {
 			setLoading(false)

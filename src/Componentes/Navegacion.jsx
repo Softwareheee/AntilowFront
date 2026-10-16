@@ -3,12 +3,13 @@ const navigationItems = [
 	{ id: 'home', label: 'Página principal', mark: '01' },
 	{ id: 'support', label: 'Soporte técnico', mark: '02' },
 	{ id: 'inventory', label: 'Inventario', mark: '03' },
-	{ id: 'reports', label: 'Reportes', mark: '04' },
 ]
 
 /** Notifica al Dashboard qué vista debe renderizarse. */
 function Navegacion({ activeSection, onSectionChange, isAdmin = false }) {
-	const items = isAdmin ? [...navigationItems, { id: 'users', label: 'Usuarios', mark: '05' }] : navigationItems
+	const items = isAdmin
+		? [...navigationItems, { id: 'reports', label: 'Reportes', mark: '04' }, { id: 'users', label: 'Usuarios', mark: '05' }]
+		: navigationItems
 	return (
 		<aside className="border-b border-white/10 px-5 py-5 lg:w-64 lg:border-b-0 lg:border-r lg:px-6 lg:py-8">
 			<p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">Workspace</p>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { registrarse } from '../assets/Servicios/authService.js'
+import { getApiErrorMessage } from '../api/api.js'
 import BrandLogo from '../Componentes/BrandLogo.jsx'
 
 /** Registro de clientes con confirmación local de contraseña antes del envío. */
@@ -34,9 +35,7 @@ function Register({ onRegister, onLogin, onBack }) {
 			const firstValidationError = validationErrors && Object.values(validationErrors)[0]?.[0]
 			setError(
 				firstValidationError ||
-					requestError.response?.data?.message ||
-					requestError.message ||
-					'No se pudo crear la cuenta',
+					getApiErrorMessage(requestError, 'No se pudo crear la cuenta. Inténtalo de nuevo.'),
 			)
 		} finally {
 			setLoading(false)

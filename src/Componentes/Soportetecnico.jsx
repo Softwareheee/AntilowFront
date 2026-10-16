@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { crearSolicitud, listarMisSolicitudes } from '../assets/Servicios/solicitudesService.js'
+import { getApiErrorMessage } from '../api/api.js'
+import AvisoAcceso from './AvisoAcceso.jsx'
 
 /** Valores iniciales del formulario de tickets del cliente. */
 const initialForm = {
@@ -61,15 +63,21 @@ const fallbackServiceVisual = {
 
 const getRequestStatus = (status) => status === 'resuelto' ? 'resuelta' : status
 
-function Soportetecnico() {
+function Soportetecnico({ authenticated, onLogin, onHome }) {
 	const [form, setForm] = useState(initialForm)
 	const [requests, setRequests] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [saving, setSaving] = useState(false)
 	const [feedback, setFeedback] = useState({ type: '', message: '' })
 	const [showSuccessNotice, setShowSuccessNotice] = useState(false)
+	const [accessReason, setAccessReason] = useState(null)
 	const [expandedRequestId, setExpandedRequestId] = useState(null)
 	const [requestFilter, setRequestFilter] = useState('todos')
+
+	const captureAccessError = (error) => {
+		if (error.response?.status === 401) setAccessReason('login')
+		if (error.response?.status === 403) setAccessReason('admin')
+	}
 
 	useEffect(() => {
 		if (!showSuccessNotice) return undefined
@@ -107,7 +115,8 @@ function Soportetecnico() {
 			const loadedRequests = await listarMisSolicitudes()
 			setRequests(loadedRequests)
 		} catch (error) {
-			setFeedback({ type: 'error', message: error.response?.data?.message || 'No se pudieron cargar tus solicitudes.' })
+			captureAccessError(error)
+			setFeedback({ type: 'error', message: getApiErrorMessage(error, 'No se pudieron cargar tus solicitudes.') })
 		} finally {
 			setLoading(false)
 		}
@@ -122,7 +131,10 @@ function Soportetecnico() {
 				if (!cancelled) setRequests(loadedRequests)
 			})
 			.catch((error) => {
-				if (!cancelled) setFeedback({ type: 'error', message: error.response?.data?.message || 'No se pudieron cargar tus solicitudes.' })
+				if (!cancelled) {
+					captureAccessError(error)
+					setFeedback({ type: 'error', message: getApiErrorMessage(error, 'No se pudieron cargar tus solicitudes.') })
+				}
 			})
 			.finally(() => {
 				if (!cancelled) setLoading(false)
@@ -144,12 +156,17 @@ function Soportetecnico() {
 			setShowSuccessNotice(true)
 			await loadRequests()
 		} catch (error) {
+			captureAccessError(error)
 			const validationErrors = error.response?.data?.errors
 			const firstError = validationErrors && Object.values(validationErrors)[0]?.[0]
-			setFeedback({ type: 'error', message: firstError || error.response?.data?.message || 'No se pudo enviar el requerimiento.' })
+			setFeedback({ type: 'error', message: firstError || getApiErrorMessage(error, 'No se pudo enviar el requerimiento.') })
 		} finally {
 			setSaving(false)
 		}
+	}
+
+	if (accessReason || !authenticated) {
+		return <AvisoAcceso reason={accessReason || 'login'} onLogin={onLogin} onHome={onHome} />
 	}
 
 	return (

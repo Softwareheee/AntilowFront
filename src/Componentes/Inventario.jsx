@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { crearProducto, editarProducto, eliminarProducto, listarProductos, solicitarCompra } from '../assets/Servicios/usuariosService.js'
+import { getApiErrorMessage } from '../api/api.js'
 
 /** Catálogo público y herramientas administrativas de stock y productos. */
 const emptyProduct = { nombre: '', categoria: 'periferico', descripcion: '', precio: '', stock: '', imagen_url: '', imagen: null, caracteristicas: '' }
@@ -13,6 +14,18 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 	const [deletingId, setDeletingId] = useState(null)
 	const [message, setMessage] = useState('')
 	const [error, setError] = useState('')
+	const [purchaseProduct, setPurchaseProduct] = useState(null)
+	const [purchaseForm, setPurchaseForm] = useState({ nombre_cliente: '', telefono_cliente: '', cantidad: '1' })
+	const [purchaseSaving, setPurchaseSaving] = useState(false)
+	const [purchaseError, setPurchaseError] = useState('')
+	const [purchaseSuccess, setPurchaseSuccess] = useState('')
+
+	useEffect(() => {
+		if (!purchaseSuccess) return undefined
+
+		const timeoutId = window.setTimeout(() => setPurchaseSuccess(''), 8000)
+		return () => window.clearTimeout(timeoutId)
+	}, [purchaseSuccess])
 
 	/** Actualiza el catálogo desde la API y refleja errores de conectividad. */
 	const loadProducts = async () => {
@@ -21,7 +34,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 			setLoading(true)
 			setProducts(await listarProductos())
 		} catch (requestError) {
-			setError(requestError.response?.data?.message || 'No se pudo cargar el inventario.')
+			setError(getApiErrorMessage(requestError, 'No se pudo cargar el inventario.'))
 		} finally {
 			setLoading(false)
 		}
@@ -35,7 +48,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 				const loadedProducts = await listarProductos()
 				if (!cancelled) setProducts(loadedProducts)
 			} catch (requestError) {
-				if (!cancelled) setError(requestError.response?.data?.message || 'No se pudo cargar el inventario.')
+				if (!cancelled) setError(getApiErrorMessage(requestError, 'No se pudo cargar el inventario.'))
 			} finally {
 				if (!cancelled) setLoading(false)
 			}
@@ -71,7 +84,7 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 			setMessage('Producto guardado correctamente.')
 		} catch (requestError) {
 			const validationErrors = requestError.response?.data?.errors
-			setError(validationErrors ? Object.values(validationErrors)[0]?.[0] : requestError.response?.data?.message || 'No se pudo guardar el producto.')
+			setError(validationErrors ? Object.values(validationErrors)[0]?.[0] : getApiErrorMessage(requestError, 'No se pudo guardar el producto.'))
 		} finally {
 			setSaving(false)
 		}
@@ -97,30 +110,115 @@ function Inventario({ isAdmin = false, authenticated = false, onLogin, onRegiste
 			await loadProducts()
 			setMessage(`${product.nombre} fue eliminado del inventario.`)
 		} catch (requestError) {
-			setError(requestError.response?.data?.message || 'No se pudo eliminar el producto.')
+			setError(getApiErrorMessage(requestError, 'No se pudo eliminar el producto.'))
 		} finally {
 			setDeletingId(null)
 		}
 	}
 
-	/** Crea una solicitud de compra; visitantes pasan primero al login. */
-	const buyProduct = async (product) => {
+	/** Abre una solicitud de compra con el producto ya seleccionado. */
+	const buyProduct = (product) => {
 		if (!authenticated) {
 			onLogin?.()
 			return
 		}
 
+		setError('')
+		setPurchaseError('')
+		setPurchaseForm({ nombre_cliente: '', telefono_cliente: '', cantidad: '1' })
+		setPurchaseProduct(product)
+	}
+
+	const closePurchaseForm = () => {
+		if (purchaseSaving) return
+		setPurchaseProduct(null)
+		setPurchaseError('')
+	}
+
+	/** Envía al administrador la compra solicitada y los datos para contactar al cliente. */
+	const submitPurchase = async (event) => {
+		event.preventDefault()
+		if (!purchaseProduct) return
+
+		setPurchaseSaving(true)
+		setPurchaseError('')
 		try {
-			setError('')
-			await solicitarCompra(product.id, product)
-			setMessage(`Solicitud enviada para ${product.nombre}. El equipo te contactará pronto.`)
+			await solicitarCompra(purchaseProduct.id, purchaseProduct, purchaseForm)
+			setPurchaseProduct(null)
+			setPurchaseSuccess(purchaseProduct.nombre)
 		} catch (requestError) {
-			setError(requestError.response?.data?.message || 'No se pudo enviar la solicitud de compra.')
+			const validationErrors = requestError.response?.data?.errors
+			setPurchaseError(validationErrors ? Object.values(validationErrors)[0]?.[0] : getApiErrorMessage(requestError, 'No se pudo enviar la solicitud de compra.'))
+		} finally {
+			setPurchaseSaving(false)
 		}
 	}
 
 	return (
 		<section className="space-y-7" aria-labelledby="inventory-title">
+			{purchaseSuccess && (
+				<div className="report-success-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm">
+					<div className="report-success-notice relative w-full max-w-md overflow-hidden rounded-3xl border border-emerald-300/20 bg-[#0d151b] p-7 text-center shadow-[0_24px_100px_rgba(0,0,0,.65)] sm:p-9" role="status" aria-live="polite" aria-atomic="true">
+						<div className="report-success-glow pointer-events-none absolute -top-24 left-1/2 h-48 w-64 -translate-x-1/2 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden="true" />
+						<div className="relative mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-300/25 bg-emerald-300/10 text-emerald-300 shadow-[0_0_35px_rgba(52,211,153,.15)]">
+							<svg className="h-8 w-8 report-success-check" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 12.5 4 4L18.5 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+						</div>
+						<p className="relative mt-5 text-[11px] font-bold uppercase tracking-[.22em] text-emerald-300">Solicitud de compra enviada</p>
+						<h2 className="relative mt-2 font-['Space_Grotesk'] text-2xl font-bold text-white sm:text-3xl">¡Gracias por elegirnos!</h2>
+						<p className="relative mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-300">
+							Registramos tu interés en <strong className="text-white">{purchaseSuccess}</strong>. Nuestro equipo revisará la disponibilidad y se comunicará contigo al teléfono que indicaste.
+						</p>
+						<button className="relative mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200" type="button" onClick={() => setPurchaseSuccess('')}>Entendido</button>
+						<div className="report-success-progress absolute bottom-0 left-0 h-1 bg-gradient-to-r from-emerald-400 to-cyan-300" aria-hidden="true" />
+					</div>
+				</div>
+			)}
+			{purchaseProduct && (
+				<div className="purchase-modal-backdrop fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-slate-950/80 px-4 py-8 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) closePurchaseForm() }}>
+					<section className="purchase-modal-card relative my-auto w-full max-w-lg overflow-hidden rounded-3xl border border-cyan-300/15 bg-[#0b111b] shadow-[0_24px_100px_rgba(0,0,0,.7)]" role="dialog" aria-modal="true" aria-labelledby="purchase-modal-title">
+						<div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" aria-hidden="true" />
+						<div className="flex items-start justify-between gap-4 border-b border-white/10 p-6 sm:p-7">
+							<div>
+								<p className="text-[10px] font-bold uppercase tracking-[.22em] text-cyan-300">Solicitud de compra</p>
+								<h2 id="purchase-modal-title" className="mt-2 font-['Space_Grotesk'] text-2xl font-bold text-white">Hablemos de este equipo</h2>
+								<p className="mt-2 text-sm leading-5 text-slate-400">Déjanos tus datos y un técnico te contactará para confirmar disponibilidad.</p>
+							</div>
+							<button className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/25 hover:text-white disabled:opacity-50" type="button" onClick={closePurchaseForm} disabled={purchaseSaving} aria-label="Cerrar formulario">✕</button>
+						</div>
+						<form className="space-y-5 p-6 sm:p-7" onSubmit={submitPurchase}>
+							<div className="flex items-center gap-4 rounded-2xl border border-cyan-300/10 bg-cyan-300/[.05] p-3">
+								<div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-950">
+									{purchaseProduct.imagen_url ? <img className="h-full w-full object-cover" src={purchaseProduct.imagen_url} alt="" /> : <div className="grid h-full place-items-center text-3xl text-slate-700">⌘</div>}
+								</div>
+								<div className="min-w-0">
+									<p className="text-[10px] font-bold uppercase tracking-widest text-cyan-300">Producto seleccionado</p>
+									<h3 className="mt-1 truncate text-sm font-bold text-white">{purchaseProduct.nombre}</h3>
+									<p className="mt-1 text-sm font-semibold text-cyan-200">${Number(purchaseProduct.precio).toLocaleString('es-CO')} <span className="text-xs font-normal text-slate-500">· {purchaseProduct.stock} disponibles</span></p>
+								</div>
+							</div>
+							<div className="grid gap-4 sm:grid-cols-2">
+								<label className="block sm:col-span-2">
+									<span className="mb-1.5 block text-xs font-semibold text-slate-300">Nombre completo</span>
+									<input className="catalog-input" name="nombre_cliente" type="text" autoComplete="name" maxLength="255" placeholder="¿Con quién nos comunicamos?" value={purchaseForm.nombre_cliente} onChange={({ target }) => setPurchaseForm((current) => ({ ...current, nombre_cliente: target.value }))} required />
+								</label>
+								<label className="block">
+									<span className="mb-1.5 block text-xs font-semibold text-slate-300">Teléfono de contacto</span>
+									<input className="catalog-input" name="telefono_cliente" type="tel" autoComplete="tel" maxLength="30" placeholder="300 123 4567" value={purchaseForm.telefono_cliente} onChange={({ target }) => setPurchaseForm((current) => ({ ...current, telefono_cliente: target.value }))} required />
+								</label>
+								<label className="block">
+									<span className="mb-1.5 block text-xs font-semibold text-slate-300">Cantidad</span>
+									<input className="catalog-input" name="cantidad" type="number" min="1" max={purchaseProduct.stock} step="1" value={purchaseForm.cantidad} onChange={({ target }) => setPurchaseForm((current) => ({ ...current, cantidad: target.value }))} required />
+								</label>
+							</div>
+							{purchaseError && <p className="rounded-xl border border-red-400/20 bg-red-400/[.07] px-4 py-3 text-xs leading-5 text-red-200" role="alert">{purchaseError}</p>}
+							<div className="flex flex-col-reverse gap-3 border-t border-white/10 pt-5 sm:flex-row sm:justify-end">
+								<button className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/[.05] disabled:opacity-50" type="button" onClick={closePurchaseForm} disabled={purchaseSaving}>Cancelar</button>
+								<button className="rounded-xl bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-wait disabled:opacity-60" type="submit" disabled={purchaseSaving}>{purchaseSaving ? 'Enviando solicitud...' : 'Enviar solicitud'}</button>
+							</div>
+						</form>
+					</section>
+				</div>
+			)}
 			<div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-cyan-300">Catálogo Antilow / inventario</p><h1 id="inventory-title" className="text-3xl font-black text-white sm:text-4xl">Periféricos listos para tu setup</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Explora equipos disponibles, compara sus características y solicita una compra directamente a nuestro equipo.</p></div><button className="w-fit rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-cyan-300 hover:bg-white/5" type="button" onClick={loadProducts}>Actualizar catálogo</button></div>
 			{message && <p className="rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200" role="status">{message}</p>}
 			{error && <p className="rounded-xl border border-red-400/25 bg-red-400/10 px-4 py-3 text-sm text-red-200" role="alert">{error}</p>}

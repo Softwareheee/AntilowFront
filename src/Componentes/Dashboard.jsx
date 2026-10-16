@@ -6,6 +6,7 @@ import Soportetecnico from './Soportetecnico.jsx'
 import Reportes from './Reportes.jsx'
 import BrandLogo from './BrandLogo.jsx'
 import Inicio from './Inicio.jsx'
+import AvisoAcceso from './AvisoAcceso.jsx'
 
 /** Distribuye las vistas de la plataforma y adapta controles al rol y la sesión. */
 function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdmin = false }) {
@@ -46,9 +47,19 @@ function Dashboard({ authenticated = false, onLogin, onRegister, onLogout, isAdm
                     ) : activeSection === 'inventory' ? (
                         <Inventario isAdmin={isAdmin} authenticated={authenticated} onLogin={onLogin} onRegister={onRegister} />
                     ) : activeSection === 'support' ? (
-                        <Soportetecnico />
+                        !authenticated ? (
+                            <AvisoAcceso reason="login" onLogin={onLogin} onHome={() => setActiveSection('home')} />
+                        ) : (
+                            <Soportetecnico authenticated={authenticated} onLogin={onLogin} onHome={() => setActiveSection('home')} />
+                        )
                     ) : activeSection === 'reports' ? (
-                        <Reportes />
+                        !authenticated ? (
+                            <AvisoAcceso reason="admin-login" onLogin={onLogin} onHome={() => setActiveSection('home')} />
+                        ) : !isAdmin ? (
+                            <AvisoAcceso reason="admin" onHome={() => setActiveSection('home')} />
+                        ) : (
+                            <Reportes authenticated={authenticated} isAdmin={isAdmin} onLogin={onLogin} onHome={() => setActiveSection('home')} />
+                        )
                     ) : isAdmin && activeSection === 'users' ? (
                         <AdministracionPanel />
                     ) : (

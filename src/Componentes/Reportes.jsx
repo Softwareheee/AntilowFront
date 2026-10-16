@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import api from '../api/api.js'
+import api, { getApiErrorMessage } from '../api/api.js'
+import AvisoAcceso from './AvisoAcceso.jsx'
 
 /** Valores iniciales para registrar el diagnóstico, trabajo e importes del caso. */
 const initialReportForm = {
@@ -27,16 +28,32 @@ async function loadReportData() {
 }
 
 /** Consola administrativa para cerrar solicitudes, registrar informes y descargar facturas. */
-export function Reportes() {
+export function Reportes({ authenticated, isAdmin, onLogin, onHome }) {
     const [reportes, setReportes] = useState([])
     const [solicitudesPendientes, setSolicitudesPendientes] = useState([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [downloadingId, setDownloadingId] = useState(null)
+    const [downloadingPurchaseId, setDownloadingPurchaseId] = useState(null)
     const [modalOpen, setModalOpen] = useState(false)
     const [selectedSolicitud, setSelectedSolicitud] = useState(null)
     const [form, setForm] = useState(initialReportForm)
     const [feedback, setFeedback] = useState({ type: '', message: '' })
+    const [showSuccessNotice, setShowSuccessNotice] = useState(false)
+    const [savedRequestId, setSavedRequestId] = useState(null)
+    const [accessReason, setAccessReason] = useState(null)
+
+    useEffect(() => {
+        if (!showSuccessNotice) return undefined
+
+        const timeoutId = window.setTimeout(() => setShowSuccessNotice(false), 8000)
+        return () => window.clearTimeout(timeoutId)
+    }, [showSuccessNotice])
+
+    const captureAccessError = (error) => {
+        if (error.response?.status === 401) setAccessReason('admin-login')
+        if (error.response?.status === 403) setAccessReason('admin')
+    }
 
     /** Refresca informes y solicitudes y presenta errores del backend. */
     const fetchData = async () => {
@@ -47,9 +64,10 @@ export function Reportes() {
             setReportes(data.reports)
             setSolicitudesPendientes(data.pendingRequests)
         } catch (requestError) {
+            captureAccessError(requestError)
             setFeedback({
                 type: 'error',
-                message: requestError.response?.data?.message || 'Error al conectar con el servidor.'
+                message: getApiErrorMessage(requestError, 'Error al conectar con el servidor.')
             })
         } finally {
             setLoading(false)
@@ -67,10 +85,11 @@ export function Reportes() {
                 setReportes(data.reports)
                 setSolicitudesPendientes(data.pendingRequests)
             } catch (requestError) {
+                captureAccessError(requestError)
                 if (!cancelled) {
                     setFeedback({
                         type: 'error',
-                        message: requestError.response?.data?.message || 'Error al conectar con el servidor.'
+                        message: getApiErrorMessage(requestError, 'Error al conectar con el servidor.')
                     })
                 }
             } finally {
@@ -108,19 +127,20 @@ export function Reportes() {
         setFeedback({ type: '', message: '' })
 
         try {
+            const requestId = form.solicitud_servicio_id
             await api.post('/reportes', form)
-            setFeedback({
-                type: 'success',
-                message: `Reporte técnico guardado con éxito para el requerimiento #${form.solicitud_servicio_id}.`
-            })
+            setSavedRequestId(requestId)
             handleCloseModal()
+            setFeedback({ type: '', message: '' })
+            setShowSuccessNotice(true)
             await fetchData()
         } catch (error) {
+            captureAccessError(error)
             const validationErrors = error.response?.data?.errors
             const firstError = validationErrors && Object.values(validationErrors)[0]?.[0]
             setFeedback({
                 type: 'error',
-                message: firstError || error.response?.data?.message || 'No se pudo guardar el reporte de servicio.'
+                message: firstError || getApiErrorMessage(error, 'No se pudo guardar el reporte de servicio.')
             })
         } finally {
             setSaving(false)
@@ -144,6 +164,7 @@ export function Reportes() {
             link.remove()
             window.URL.revokeObjectURL(url)
         } catch (requestError) {
+            captureAccessError(requestError)
             let serverMessage = requestError.response?.data?.message
             if (requestError.response?.data instanceof Blob) {
                 try {
@@ -155,17 +176,82 @@ export function Reportes() {
             }
             setFeedback({
                 type: 'error',
-                message: serverMessage || 'No se pudo descargar la factura en PDF. Intenta de nuevo.'
+                message: serverMessage || getApiErrorMessage(requestError, 'No se pudo descargar la factura en PDF. Intenta de nuevo.')
             })
         } finally {
             setDownloadingId(null)
         }
     }
 
+    /** Descarga el documento de compra con precio y cliente, sin usar el formato técnico. */
+    const descargarFacturaCompra = async (solicitud) => {
+        setDownloadingPurchaseId(solicitud.id)
+        try {
+            const response = await api.get(`/solicitudes-servicio/${solicitud.id}/factura-compra/descargar`, {
+                responseType: 'blob',
+            })
+
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `Proforma_Compra_Antilow_${solicitud.id}.pdf`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+        } catch (requestError) {
+            captureAccessError(requestError)
+            let serverMessage = requestError.response?.data?.message
+            if (requestError.response?.data instanceof Blob) {
+                try {
+                    const errorBody = JSON.parse(await requestError.response.data.text())
+                    serverMessage = errorBody.message
+                } catch {
+                    serverMessage = ''
+                }
+            }
+            setFeedback({
+                type: 'error',
+                message: serverMessage || getApiErrorMessage(requestError, 'No se pudo generar el detalle PDF de compra. Intenta de nuevo.')
+            })
+        } finally {
+            setDownloadingPurchaseId(null)
+        }
+    }
+
     const costoTotalCalculado = (Number(form.costo_mano_obra) || 0) + (Number(form.costo_repuestos) || 0)
+
+    if (accessReason || !authenticated || !isAdmin) {
+        return <AvisoAcceso reason={accessReason || (!authenticated ? 'login' : 'admin')} onLogin={onLogin} onHome={onHome} />
+    }
 
     return (
         <section className="space-y-6" aria-labelledby="reports-title">
+            {showSuccessNotice && (
+                <div className="report-success-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm">
+                    <div className="report-success-notice relative w-full max-w-md overflow-hidden rounded-3xl border border-emerald-300/20 bg-[#0d151b] p-7 text-center shadow-[0_24px_100px_rgba(0,0,0,.65)] sm:p-9" role="status" aria-live="polite" aria-atomic="true">
+                        <div className="report-success-glow pointer-events-none absolute -top-24 left-1/2 h-48 w-64 -translate-x-1/2 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden="true" />
+                        <div className="relative mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-300/25 bg-emerald-300/10 text-emerald-300 shadow-[0_0_35px_rgba(52,211,153,.15)]">
+                            <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path className="report-success-check" d="m6 12.5 4 4L18.5 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </div>
+                        <p className="relative mt-5 text-[11px] font-bold uppercase tracking-[.22em] text-emerald-300">Intervención registrada</p>
+                        <h2 className="relative mt-2 font-['Space_Grotesk'] text-2xl font-bold text-white sm:text-3xl">¡Reporte creado!</h2>
+                        <p className="relative mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-300">
+                            El reporte del requerimiento <strong className="text-white">#{savedRequestId}</strong> quedó guardado correctamente. El caso ya está actualizado y la información quedó disponible en el historial.
+                        </p>
+                        <button
+                            className="relative mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d151b]"
+                            type="button"
+                            onClick={() => setShowSuccessNotice(false)}
+                        >
+                            Continuar
+                        </button>
+                        <div className="report-success-progress absolute bottom-0 left-0 h-1 bg-gradient-to-r from-emerald-400 to-cyan-300" aria-hidden="true" />
+                    </div>
+                </div>
+            )}
             <div className="max-w-3xl">
                 <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-cyan-400">Módulo Operativo / 04</p>
                 <h1 id="reports-title" className="text-4xl font-black tracking-tight text-white sm:text-5xl">
@@ -264,8 +350,8 @@ export function Reportes() {
                 {/* Solicitudes de Clientes Pendientes */}
                 <div className="rounded-2xl border border-white/10 bg-slate-900/75 p-5 shadow-2xl shadow-black/20 sm:p-6">
                     <div className="mb-5">
-                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">Pendientes de Diagnóstico</p>
-                        <h2 className="mt-1 text-xl font-bold text-white">Solicitudes de Clientes</h2>
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-400">Solicitudes por atender</p>
+                        <h2 className="mt-1 text-xl font-bold text-white">Clientes y compras</h2>
                     </div>
 
                     {loading ? (
@@ -277,24 +363,52 @@ export function Reportes() {
                     ) : (
                         <div className="space-y-3">
                             {solicitudesPendientes.map((sol) => (
-                                <article key={sol.id} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
+                                <article key={sol.id} className={`rounded-xl border bg-slate-950/50 p-4 ${sol.tipo === 'compra' ? 'border-cyan-300/20 shadow-lg shadow-cyan-950/10' : 'border-white/10'}`}>
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">{sol.prioridad}</span>
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${sol.tipo === 'compra' ? 'text-cyan-300' : 'text-red-400'}`}>{sol.tipo === 'compra' ? 'Solicitud de compra' : sol.prioridad}</span>
                                             <h3 className="text-sm font-bold text-white">{sol.asunto}</h3>
                                         </div>
                                         <span className="shrink-0 rounded-full bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
                                             {sol.estado}
                                         </span>
                                     </div>
-                                    <p className="mt-2 line-clamp-2 text-xs text-slate-400">{sol.descripcion}</p>
-
-                                    <button
-                                        onClick={() => handleOpenModal(sol)}
-                                        className="mt-3 w-full rounded-lg bg-cyan-500/20 px-3 py-2 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/30 border border-cyan-500/30"
-                                    >
-                                        Generar Reporte Técnico
-                                    </button>
+                                    {sol.tipo === 'compra' ? (
+                                        <div className="mt-3 rounded-xl border border-cyan-300/10 bg-cyan-300/[.04] p-3">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Producto solicitado</p>
+                                            <p className="mt-1 text-sm font-bold text-white">{sol.producto?.nombre || sol.asunto.replace(/^Solicitud de compra:\s*/i, '')}</p>
+                                            <p className="mt-1 text-xs text-slate-400">Cantidad: <strong className="text-slate-200">{sol.cantidad || 1}</strong>{(sol.precio_unitario ?? sol.producto?.precio) != null && <> · Precio unitario: <strong className="text-slate-200">${Number(sol.precio_unitario ?? sol.producto.precio).toLocaleString('es-CO')}</strong></>}</p>
+                                        </div>
+                                    ) : (
+                                        <p className="mt-2 line-clamp-2 text-xs text-slate-400">{sol.descripcion}</p>
+                                    )}
+                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-3">
+                                        <div className="text-xs text-slate-400">
+                                            <span>Cliente: <strong className="text-slate-200">{sol.nombre_cliente || sol.user?.name || 'Cliente'}</strong></span>
+                                            {sol.telefono_cliente && <a className="ml-3 font-semibold text-cyan-300 hover:text-cyan-200" href={`tel:${sol.telefono_cliente}`}>☎ {sol.telefono_cliente}</a>}
+                                        </div>
+                                        {sol.tipo === 'compra' ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    className="rounded-lg border border-emerald-300/20 bg-emerald-300/[.08] px-3 py-2 text-xs font-bold text-emerald-200 transition hover:bg-emerald-300/[.15] disabled:cursor-wait disabled:opacity-50"
+                                                    type="button"
+                                                    onClick={() => descargarFacturaCompra(sol)}
+                                                    disabled={downloadingPurchaseId === sol.id}
+                                                >
+                                                    {downloadingPurchaseId === sol.id ? 'Generando PDF...' : 'Generar factura proforma (PDF)'}
+                                                </button>
+                                                {sol.telefono_cliente && <a className="rounded-lg border border-cyan-300/20 bg-cyan-300/[.08] px-3 py-2 text-xs font-bold text-cyan-200 transition hover:bg-cyan-300/[.15]" href={`tel:${sol.telefono_cliente}`}>Contactar cliente</a>}
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOpenModal(sol)}
+                                                className="rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-3 py-2 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/30"
+                                            >
+                                                Generar Reporte Técnico
+                                            </button>
+                                        )}
+                                    </div>
                                 </article>
                             ))}
                         </div>

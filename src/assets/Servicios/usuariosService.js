@@ -67,13 +67,16 @@ export async function eliminarProducto(id) {
     await api.delete(`/productos/${id}`)
 }
 
-/** Registra una solicitud de compra asociada al producto del catálogo. */
-export async function solicitarCompra(product_id, producto) {
+/** Registra una solicitud de compra con datos de contacto y cantidad elegida. */
+export async function solicitarCompra(product_id, producto, customerDetails) {
     const { data } = await api.post('/solicitudes-servicio', {
         product_id,
+        nombre_cliente: customerDetails.nombre_cliente,
+        telefono_cliente: customerDetails.telefono_cliente,
+        cantidad: Number(customerDetails.cantidad),
         tipo: 'compra',
         asunto: `Solicitud de compra: ${producto.nombre}`,
-        descripcion: `El cliente solicita información y disponibilidad de ${producto.nombre}.`,
+        descripcion: `El cliente solicita ${customerDetails.cantidad} unidad(es) de ${producto.nombre}.`,
         prioridad: 'normal',
     })
     return data

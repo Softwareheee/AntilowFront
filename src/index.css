@@ -35,6 +35,13 @@ button { font-family: inherit; }
 .support-notice-glow { animation: support-notice-glow 3s ease-in-out infinite alternate; }
 .support-success-check { stroke-dasharray: 24; stroke-dashoffset: 24; animation: support-check-draw .5s .18s ease-out forwards; }
 .support-notice-progress { animation: support-notice-countdown 8s linear both; }
+.report-success-backdrop { animation: support-notice-fade-in .2s ease-out both; }
+.report-success-notice { animation: support-notice-pop-in .45s cubic-bezier(.18,.89,.32,1.28) both; }
+.report-success-glow { animation: support-notice-glow 3s ease-in-out infinite alternate; }
+.report-success-check { stroke-dasharray: 24; stroke-dashoffset: 24; animation: support-check-draw .5s .18s ease-out forwards; }
+.report-success-progress { animation: support-notice-countdown 8s linear both; }
+.access-notice { animation: support-notice-pop-in .45s cubic-bezier(.18,.89,.32,1.15) both; }
+.access-notice-orbit { animation: access-notice-pulse 2.8s ease-in-out infinite; }
 @keyframes support-card-enter { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes support-empty-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes support-completed-enter { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
@@ -43,6 +50,7 @@ button { font-family: inherit; }
 @keyframes support-notice-glow { from { opacity: .45; transform: translateX(-50%) scale(.9); } to { opacity: 1; transform: translateX(-50%) scale(1.12); } }
 @keyframes support-check-draw { to { stroke-dashoffset: 0; } }
 @keyframes support-notice-countdown { from { width: 100%; } to { width: 0; } }
+@keyframes access-notice-pulse { 0%, 100% { box-shadow: 0 0 24px rgba(34,211,238,.08); } 50% { box-shadow: 0 0 42px rgba(34,211,238,.2); } }
 @media (prefers-reduced-motion: reduce) {
 	.support-summary-card, .support-request-card { animation: none; transition: none; }
 	.support-summary-card:hover { transform: none; }
@@ -50,6 +58,7 @@ button { font-family: inherit; }
 	.support-request-details-grid { transition: none; }
 	.support-empty-state, .support-completed-banner { animation: none; }
 	.support-notice-backdrop, .support-success-notice, .support-notice-glow, .support-success-check, .support-notice-progress { animation: none; }
+	.report-success-backdrop, .report-success-notice, .report-success-glow, .report-success-check, .report-success-progress, .access-notice, .access-notice-orbit { animation: none; }
 	.support-empty-state a { transition: none; }
 	.support-empty-state a:hover { transform: none; }
 }

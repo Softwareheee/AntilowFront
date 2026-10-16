@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getApiErrorMessage } from '../api/api.js'
 import {
     crearUsuario,
     editarSolicitudAdmin,
@@ -39,7 +40,7 @@ function AdministracionPanel() {
             setUsers(loadedUsers)
             setRequests(loadedRequests)
         } catch (requestError) {
-            setError(requestError.response?.data?.message || 'No se pudieron cargar los datos administrativos.')
+            setError(getApiErrorMessage(requestError, 'No se pudieron cargar los datos administrativos.'))
         } finally {
             setLoading(false)
         }
@@ -56,7 +57,7 @@ function AdministracionPanel() {
                     setRequests(loadedRequests)
                 }
             } catch (requestError) {
-                if (!cancelled) setError(requestError.response?.data?.message || 'No se pudieron cargar los datos administrativos.')
+                if (!cancelled) setError(getApiErrorMessage(requestError, 'No se pudieron cargar los datos administrativos.'))
             } finally {
                 if (!cancelled) setLoading(false)
             }
@@ -77,7 +78,7 @@ function AdministracionPanel() {
         } catch (requestError) {
             const validationErrors = requestError.response?.data?.errors
             const firstError = validationErrors && Object.values(validationErrors)[0]?.[0]
-            setError(firstError || requestError.response?.data?.message || 'No se pudo guardar el cambio.')
+            setError(firstError || getApiErrorMessage(requestError, 'No se pudo guardar el cambio.'))
         } finally {
             setSaving(false)
         }
@@ -86,7 +87,7 @@ function AdministracionPanel() {
     /** Confirma una eliminación y refresca las tablas si la API la acepta. */
     const remove = async (message, action) => {
         if (!window.confirm(message)) return
-        try { await action(); await loadAll() } catch (requestError) { setError(requestError.response?.data?.message || 'No se pudo eliminar el registro.') }
+        try { await action(); await loadAll() } catch (requestError) { setError(getApiErrorMessage(requestError, 'No se pudo eliminar el registro.')) }
     }
 
     const userSubmit = (event) => save(event, async () => {
